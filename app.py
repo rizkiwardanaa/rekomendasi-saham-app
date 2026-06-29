@@ -19,7 +19,7 @@ except:
 
 # --- 3. FUNGSI PENGAMBILAN & PEMROSESAN DATA ---
 
-@st.cache_data(ttl=3600) # Cache kurs selama 1 jam agar lebih cepat
+@st.cache_data(ttl=3600) 
 def get_usd_to_idr():
     """Mengambil kurs USD ke IDR terbaru menggunakan Yahoo Finance"""
     try:
@@ -88,25 +88,20 @@ ticker_symbol = st.sidebar.text_input("Masukkan Kode Saham (Contoh: AAPL, BBCA)"
 
 if st.sidebar.button("Analisis Saham Sekarang"):
     with st.spinner(f'Mengambil data untuk {ticker_symbol} dan mengonversi kurs...'):
-        # 1. Ambil Data Kurs & Saham
         kurs_idr = get_usd_to_idr()
         df = get_stock_data(ticker_symbol, API_KEY)
         
         if df.empty:
             st.error("Gagal memproses data. Silakan periksa kembali kode saham atau tunggu sebentar jika terkena limit API.")
         else:
-            # 2. Konversi Harga USD ke IDR
             kolom_harga = ['Open', 'High', 'Low', 'Close']
             df[kolom_harga] = df[kolom_harga] * kurs_idr
             
-            # 3. Hitung Indikator
             df['RSI'] = calculate_rsi(df)
             
-            # 4. Ambil Angka Terbaru
             latest_close = df['Close'].iloc[-1]
             latest_rsi = df['RSI'].iloc[-1]
             
-            # 5. Logika Rekomendasi
             if latest_rsi < 30:
                 recommendation = "🟢 BELI (Harga Sedang Murah/Oversold)"
             elif latest_rsi > 70:
@@ -114,7 +109,6 @@ if st.sidebar.button("Analisis Saham Sekarang"):
             else:
                 recommendation = "🟡 TAHAN (Kondisi Pasar Normal)"
                 
-            # 6. Tampilkan Papan Informasi Utama
             st.subheader(f"Ringkasan Saham: {ticker_symbol}")
             st.caption(f"*Harga sudah dikonversi ke Rupiah (Estimasi Kurs: 1 USD = Rp {kurs_idr:,.0f})*")
             
@@ -123,7 +117,6 @@ if st.sidebar.button("Analisis Saham Sekarang"):
             col2.metric("Nilai RSI (14 Hari)", f"{latest_rsi:.2f}")
             col3.metric("Rekomendasi Mesin", recommendation)
             
-            # 7. Visualisasi Grafik Interaktif
             fig = go.Figure()
             fig.add_trace(go.Candlestick(x=df.index,
                             open=df['Open'],
@@ -160,7 +153,6 @@ with col_input2:
                               "Sedikit cemas, tapi akan menunggu pasar pulih (Moderat/Seimbang)",
                               "Biasa saja, malah itu kesempatan beli lebih banyak! (Agresif/Tinggi Risiko)"])
 
-# Terjemahkan jawaban profil risiko
 if "Panik" in profil_risiko:
     profil = "Konservatif (Cari Aman)"
 elif "cemas" in profil_risiko:
@@ -186,9 +178,9 @@ if st.button("Buat Rencana Strategi Saya"):
         
     with col_text:
         st.subheader("Rincian Eksekusi Dana:")
-        st.markdown("Jika Anda memiliki modal **Rp {:,.0f}**, begini cara membaginya:".format(modal_awal).replace(',', '.'))
+        st.markdown(f"Jika Anda memiliki modal **Rp {modal_awal:,.0f}**, begini cara membaginya:".replace(',', '.'))
         
         for aset, nilai in nominal.items():
-            st.markdown(f"- **{aset}:** Rp {:,.0f}".format(nilai).replace(',', '.'))
+            st.markdown(f"- **{aset}:** Rp {nilai:,.0f}".replace(',', '.'))
             
         st.markdown("*Catatan: Lakukan pembelian aset secara bertahap (rutin tiap bulan) untuk hasil yang lebih maksimal.*")
