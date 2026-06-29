@@ -10,7 +10,6 @@ st.title("📈 Aplikasi Analisis Saham (Alpha Vantage)")
 st.markdown("Aplikasi ini menggunakan data resmi dari Alpha Vantage API dan indikator RSI.")
 
 # --- Ambil API Key dari Streamlit Secrets ---
-# Jangan tulis API Key langsung di sini agar aman!
 try:
     API_KEY = st.secrets["ALPHA_VANTAGE_KEY"]
 except:
@@ -19,19 +18,19 @@ except:
 
 # --- Fungsi Mengambil Data dari Alpha Vantage ---
 def get_stock_data(symbol, api_key):
-    # Menggunakan fungsi TIME_SERIES_DAILY untuk data harian
     url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={api_key}"
     response = requests.get(url)
     data = response.json()
     
-    # Validasi jika terjadi error atau batasan limit API gratis harian tercapai
+    # Menampilkan pesan error asli dari Alpha Vantage jika gagal (Untuk Debugging)
     if "Time Series (Daily)" not in data:
+        st.warning(f"Pesan asli dari server Alpha Vantage: {data}")
         return pd.DataFrame()
         
     # Mengubah JSON menjadi DataFrame Pandas
     df = pd.DataFrame.from_dict(data["Time Series (Daily)"], orient="index")
     
-    # Membersihkan nama kolom (Alpha Vantage menggunakan awalan angka seperti '1. open')
+    # Membersihkan nama kolom
     df = df.rename(columns={
         "1. open": "Open",
         "2. high": "High",
@@ -60,15 +59,15 @@ def calculate_rsi(data, window=14):
 
 # --- Sidebar Input ---
 st.sidebar.header("Pengaturan")
-# Catatan: Untuk Alpha Vantage, saham Indonesia biasanya menggunakan akhiran .JKT (contoh: BBCA.JKT)
-ticker_symbol = st.sidebar.text_input("Masukkan Kode Saham (Contoh: BBCA.JKT, AAPL, TSLA)", "BBCA.JKT")
+# Menggunakan default AAPL (Apple) untuk memastikan API berjalan normal
+ticker_symbol = st.sidebar.text_input("Masukkan Kode Saham (Contoh: AAPL, IBM, BBCA.JKT)", "AAPL")
 
 if st.sidebar.button("Analisis Sekarang"):
     with st.spinner(f'Mengambil data dari Alpha Vantage untuk {ticker_symbol}...'):
         df = get_stock_data(ticker_symbol, API_KEY)
         
         if df.empty:
-            st.error("Gagal mengambil data. Pastikan kode saham benar atau limit API gratis Anda belum habis (5 requests per menit).")
+            st.error("Gagal memproses data. Silakan baca pesan di kotak kuning atas untuk mengetahui penyebab dari Alpha Vantage.")
         else:
             # Hitung RSI
             df['RSI'] = calculate_rsi(df)
